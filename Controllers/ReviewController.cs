@@ -7,26 +7,25 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ARMENIACarShop.Data;
 using ARMENIACarShop.Models;
-using System.Text.RegularExpressions;
 
 namespace ARMENIACarShop.Controllers
 {
-    public class BuyerController : Controller
+    public class ReviewController : Controller
     {
         private readonly ARMENIACarShopContext _context;
 
-        public BuyerController(ARMENIACarShopContext context)
+        public ReviewController(ARMENIACarShopContext context)
         {
             _context = context;
         }
 
-        // GET: Buyer
+        // GET: Review
         public async Task<IActionResult> Index()
         {
-            return View(await _context.BuyerModel.ToListAsync());
+            return View(await _context.ReviewModel.ToListAsync());
         }
 
-        // GET: Buyer/Details/5
+        // GET: Review/Details/5
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null)
@@ -34,51 +33,39 @@ namespace ARMENIACarShop.Controllers
                 return NotFound();
             }
 
-            var buyerModel = await _context.BuyerModel
+            var reviewModel = await _context.ReviewModel
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (buyerModel == null)
+            if (reviewModel == null)
             {
                 return NotFound();
             }
 
-            return View(buyerModel);
+            return View(reviewModel);
         }
 
-        // GET: Buyer/Create
+        // GET: Review/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: Buyer/Create
+        // POST: Review/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirsName,LastName,Email,Password,PhoneNumber")] BuyerModel buyerModel)
+        public async Task<IActionResult> Create([Bind("Id,Stars")] ReviewModel reviewModel)
         {
-            buyerModel.Password = HashPassword.ProceedData(buyerModel.Password);
-            if (ModelState.IsValid && !CheckEmail(buyerModel.Email))
+            if (ModelState.IsValid)
             {
-                _context.Add(buyerModel);
+                _context.Add(reviewModel);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(buyerModel);
+            return View(reviewModel);
         }
 
-        
-
-
-
-
-
-
-
-
-
-
-        // GET: Buyer/Edit/5
+        // GET: Review/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -86,22 +73,22 @@ namespace ARMENIACarShop.Controllers
                 return NotFound();
             }
 
-            var buyerModel = await _context.BuyerModel.FindAsync(id);
-            if (buyerModel == null)
+            var reviewModel = await _context.ReviewModel.FindAsync(id);
+            if (reviewModel == null)
             {
                 return NotFound();
             }
-            return View(buyerModel);
+            return View(reviewModel);
         }
 
-        // POST: Buyer/Edit/5
+        // POST: Review/Edit/5
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FirsName,LastName,Email,Password,PhoneNumber")] BuyerModel buyerModel)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Stars")] ReviewModel reviewModel)
         {
-            if (id != buyerModel.Id)
+            if (id != reviewModel.Id)
             {
                 return NotFound();
             }
@@ -110,12 +97,12 @@ namespace ARMENIACarShop.Controllers
             {
                 try
                 {
-                    _context.Update(buyerModel);
+                    _context.Update(reviewModel);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!BuyerModelExists(buyerModel.Id))
+                    if (!ReviewModelExists(reviewModel.Id))
                     {
                         return NotFound();
                     }
@@ -126,10 +113,10 @@ namespace ARMENIACarShop.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(buyerModel);
+            return View(reviewModel);
         }
 
-        // GET: Buyer/Delete/5
+        // GET: Review/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -137,52 +124,34 @@ namespace ARMENIACarShop.Controllers
                 return NotFound();
             }
 
-            var buyerModel = await _context.BuyerModel
+            var reviewModel = await _context.ReviewModel
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (buyerModel == null)
+            if (reviewModel == null)
             {
                 return NotFound();
             }
 
-            return View(buyerModel);
+            return View(reviewModel);
         }
 
-        // POST: Buyer/Delete/5
+        // POST: Review/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var buyerModel = await _context.BuyerModel.FindAsync(id);
-            if (buyerModel != null)
+            var reviewModel = await _context.ReviewModel.FindAsync(id);
+            if (reviewModel != null)
             {
-                _context.BuyerModel.Remove(buyerModel);
+                _context.ReviewModel.Remove(reviewModel);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool BuyerModelExists(int id)
+        private bool ReviewModelExists(int id)
         {
-            return _context.BuyerModel.Any(e => e.Id == id);
-        }
-
-
-        private bool CheckEmail(string email)
-        {
-            List<BuyerModel> authors = _context.BuyerModel.ToListAsync().Result;
-
-            foreach (BuyerModel author in authors)
-            {
-                if (author.Email == email)
-                {
-                    return true;
-                }
-            }
-
-            string stugum1 = "^\\S+@\\S+\\.\\S+$";
-            Regex regex1 = new Regex(stugum1);
-            return !regex1.IsMatch(email);
+            return _context.ReviewModel.Any(e => e.Id == id);
         }
     }
 }

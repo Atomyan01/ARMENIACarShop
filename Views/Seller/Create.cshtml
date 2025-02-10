@@ -12,11 +12,10 @@
     <div class="col-md-4">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="AvarageScore" class="control-label"></label>
-                <input asp-for="AvarageScore" class="form-control" />
-                <span asp-validation-for="AvarageScore" class="text-danger"></span>
-            </div>
+
+            <!-- Hidden field for AvarageScore -->
+            <input type="hidden" asp-for="AvarageScore" />
+
             <div class="form-group">
                 <label asp-for="FirsName" class="control-label"></label>
                 <input asp-for="FirsName" class="form-control" />
@@ -54,5 +53,7 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }

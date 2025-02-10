@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ARMENIACarShop.Data;
 using ARMENIACarShop.Models;
+using System.Text.RegularExpressions;
 
 namespace ARMENIACarShop.Controllers
 {
@@ -56,7 +57,8 @@ namespace ARMENIACarShop.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("AvarageScore,Id,FirsName,LastName,Email,Password,PhoneNumber")] SellerModel sellerModel)
         {
-            if (ModelState.IsValid)
+            sellerModel.Password = HashPassword.ProceedData(sellerModel.Password);
+            if (ModelState.IsValid && !CheckEmail(sellerModel.Email))
             {
                 _context.Add(sellerModel);
                 await _context.SaveChangesAsync();
@@ -86,7 +88,7 @@ namespace ARMENIACarShop.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("AvarageScore,Id,FirsName,LastName,Email,Password,PhoneNumber")] SellerModel sellerModel)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,FirsName,LastName,Email,Password,PhoneNumber")] SellerModel sellerModel)
         {
             if (id != sellerModel.Id)
             {
@@ -152,6 +154,24 @@ namespace ARMENIACarShop.Controllers
         private bool SellerModelExists(int id)
         {
             return _context.SellerModel.Any(e => e.Id == id);
+        }
+
+
+        private bool CheckEmail(string email)
+        {
+            List<SellerModel> authors = _context.SellerModel.ToListAsync().Result;
+
+            foreach (SellerModel author in authors)
+            {
+                if (author.Email == email)
+                {
+                    return true;
+                }
+            }
+
+            string stugum1 = "^\\S+@\\S+\\.\\S+$";
+            Regex regex1 = new Regex(stugum1);
+            return !regex1.IsMatch(email);
         }
     }
 }

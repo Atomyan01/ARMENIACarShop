@@ -2,7 +2,8 @@
 {
 	public class SellerModel:PersonModel
 	{
-		public double AvarageScore { get; set; }
-		public List<CarModel> Cars { get; set; } = new List<CarModel>();
+		public int AvarageScore { get; set; } = 0;
+
+        public List<CarModel> Cars { get; set; } = new List<CarModel>();
 	}
 }

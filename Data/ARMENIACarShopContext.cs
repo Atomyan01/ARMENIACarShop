@@ -18,5 +18,6 @@ namespace ARMENIACarShop.Data
         public DbSet<ARMENIACarShop.Models.BuyerModel> BuyerModel { get; set; } = default!;
         public DbSet<ARMENIACarShop.Models.CarModel> CarModel { get; set; } = default!;
         public DbSet<ARMENIACarShop.Models.SellerModel> SellerModel { get; set; } = default!;
+        public DbSet<ARMENIACarShop.Models.ReviewModel> ReviewModel { get; set; } = default!;
     }
 }
