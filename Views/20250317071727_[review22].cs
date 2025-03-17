@@ -5,7 +5,7 @@
 namespace ARMENIACarShop.Migrations
 {
     /// <inheritdoc />
-    public partial class vacharox : Migration
+    public partial class review22 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

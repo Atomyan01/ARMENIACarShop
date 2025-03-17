@@ -1,0 +1,52 @@
+﻿@model IEnumerable<ARMENIACarShop.Models.CarModel>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-controller = "Car" asp-action="Index">Add New</a> |
+    <a asp-controller="OrderSession" asp-action="ClearOrder" asp-route-id="">Clear all</a> |
+</p>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Price)</th>
+            <th>Price for each car</th>
+            <th>Price for Cars</th>
+            <th>Count</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => order.Price)</td>
+
+                <td>
+                    @ViewBag.Sums[order.Id]
+                </td>
+
+                <td>
+                    @ViewBag.Counts[order.Id]
+                </td>
+
+                <td>
+                    <a asp-action="Edit" asp-route-id="@order.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@order.Id">Details</a> |
+                    <a asp-controller="OrderSession" asp-action="RemoveFromOrder" asp-route-id="@order.Id">Remove</a> |
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h3>
+    Total Amount to Pay: @(ViewBag.Sum ?? 0)
+</h3>
+
+<a class="btn btn-primary" asp-controller="Order" asp-action="Index">Buy</a>

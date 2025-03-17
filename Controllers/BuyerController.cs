@@ -3,186 +3,134 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ARMENIACarShop.Data;
 using ARMENIACarShop.Models;
-using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Identity;
 
 namespace ARMENIACarShop.Controllers
 {
-    public class BuyerController : Controller
-    {
-        private readonly ARMENIACarShopContext _context;
+	public class BuyerController : Controller
+	{
+		private readonly ARMENIACarShopContext _context;
+		private readonly UserManager<BuyerModel> _userManager;
+		private readonly SignInManager<BuyerModel> _signInManager;
 
-        public BuyerController(ARMENIACarShopContext context)
-        {
-            _context = context;
-        }
+		public BuyerController(ARMENIACarShopContext context, SignInManager<BuyerModel> signInManager, UserManager<BuyerModel> userManager)
+		{
+			_context = context;
+			_signInManager = signInManager;
+			_userManager = userManager;
+		}
 
-        // GET: Buyer
-        public async Task<IActionResult> Index()
-        {
-            return View(await _context.BuyerModel.ToListAsync());
-        }
+		// GET: Buyer
+		public async Task<IActionResult> Index()
+		{
+			return View(await _context.BuyerModel.ToListAsync());
+		}
 
-        // GET: Buyer/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+		// GET: Buyer/Create
+		public IActionResult Create()
+		{
+			return View();
+		}
 
-            var buyerModel = await _context.BuyerModel
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (buyerModel == null)
-            {
-                return NotFound();
-            }
+		[HttpPost]
+		[ValidateAntiForgeryToken]
+		public async Task<IActionResult> Create([Bind("Age,FirstName,LastName,Email,Password")] BuyerModel buyerModel, string password)
+		{
+			// Set lockout properties and normalize the email
+			buyerModel.LockoutEnabled = false;
+			buyerModel.NormalizedEmail = _userManager.NormalizeEmail(buyerModel.Email);
+			buyerModel.NormalizedUserName = buyerModel.Email;
+			buyerModel.PasswordHash = password;
+			ModelState.Remove("PhoneNumber");
 
-            return View(buyerModel);
-        }
+			if (ModelState.IsValid)
+			{
+				// Create a new user and set the properties
+				var user = new BuyerModel
+				{
+					UserName = buyerModel.Email,
+					Email = buyerModel.Email,
+					FirstName = buyerModel.FirstName,
+					LastName = buyerModel.LastName,
+					Age = buyerModel.Age,
+					NormalizedEmail = buyerModel.NormalizedEmail,
+					PasswordHash = buyerModel.PasswordHash,
+					Id = Guid.NewGuid().ToString() // Add the ID here if needed
+				};
 
-        // GET: Buyer/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
+				// Create the user in the system
+				var result = await _userManager.CreateAsync(user, password);
 
-        // POST: Buyer/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirsName,LastName,Email,Password,PhoneNumber")] BuyerModel buyerModel)
-        {
-            buyerModel.Password = HashPassword.ProceedData(buyerModel.Password);
-            if (ModelState.IsValid && !CheckEmail(buyerModel.Email))
-            {
-                _context.Add(buyerModel);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(buyerModel);
-        }
+				if (result.Succeeded)
+				{
+					// If successful, sign in the user
+					await _signInManager.SignInAsync(user, isPersistent: false);
+					return RedirectToAction("Index", "Home");
+				}
+				else
+				{
+					// If there are errors, add them to the model state
+					foreach (var error in result.Errors)
+					{
+						ModelState.AddModelError("", error.Description);
+					}
+				}
+			}
 
-        
+			return View(buyerModel);
+		}
 
+		// GET: Buyer/Edit/5
+		public async Task<IActionResult> Edit(int? id)
+		{
+			if (id == null)
+			{
+				return NotFound();
+			}
+			var buyerModel = await _context.BuyerModel.FindAsync(id);
+			if (buyerModel == null)
+			{
+				return NotFound();
+			}
+			return View(buyerModel);
+		}
 
+		// Login
+		[HttpPost]
+		public async Task<IActionResult> Login(string email, string password)
+		{
+			var user = await _userManager.FindByEmailAsync(email);
+			if (user != null)
+			{
+				var result = await _signInManager.PasswordSignInAsync(user, password, false, false);
+				if (result.Succeeded)
+				{
+					return RedirectToAction("Index", "Home");
+				}
+				else
+				{
+					ModelState.AddModelError("", "Invalid Email or Password");
+				}
+			}
+			else
+			{
+				ModelState.AddModelError("", "User Not Found");
+			}
+			return View();
+		}
 
+		public IActionResult Login()
+		{
+			return View();
+		}
 
+		private BuyerModel? SearchByEmail(string email)
+		{
+			return _context.BuyerModel.FirstOrDefault(user => user.Email == email);
+		}
 
-
-
-
-
-
-        // GET: Buyer/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var buyerModel = await _context.BuyerModel.FindAsync(id);
-            if (buyerModel == null)
-            {
-                return NotFound();
-            }
-            return View(buyerModel);
-        }
-
-        // POST: Buyer/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FirsName,LastName,Email,Password,PhoneNumber")] BuyerModel buyerModel)
-        {
-            if (id != buyerModel.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(buyerModel);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!BuyerModelExists(buyerModel.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(buyerModel);
-        }
-
-        // GET: Buyer/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var buyerModel = await _context.BuyerModel
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (buyerModel == null)
-            {
-                return NotFound();
-            }
-
-            return View(buyerModel);
-        }
-
-        // POST: Buyer/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var buyerModel = await _context.BuyerModel.FindAsync(id);
-            if (buyerModel != null)
-            {
-                _context.BuyerModel.Remove(buyerModel);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
-
-        private bool BuyerModelExists(int id)
-        {
-            return _context.BuyerModel.Any(e => e.Id == id);
-        }
-
-
-        private bool CheckEmail(string email)
-        {
-            List<BuyerModel> authors = _context.BuyerModel.ToListAsync().Result;
-
-            foreach (BuyerModel author in authors)
-            {
-                if (author.Email == email)
-                {
-                    return true;
-                }
-            }
-
-            string stugum1 = "^\\S+@\\S+\\.\\S+$";
-            Regex regex1 = new Regex(stugum1);
-            return !regex1.IsMatch(email);
-        }
-    }
+	}
 }

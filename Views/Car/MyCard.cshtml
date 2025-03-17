@@ -1,0 +1,24 @@
+﻿<h2>My Card</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Car</th>
+            <th>Price</th>
+            <th>Count</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var car in Model)
+        {
+            <tr>
+                <td>@car.Name</td>
+                <td>@car.Price</td>
+                <td>@car.Count</td>
+                <td>@(car.Price * car.Count)</td>
+            </tr>
+        }
+    </tbody>
+</table>
+<h3>Total Price: @ViewBag.TotalPrice</h3>
+<h3>Total Count: @ViewBag.TotalCount</h3>

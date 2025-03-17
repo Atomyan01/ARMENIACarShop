@@ -1,0 +1,31 @@
+﻿@using ARMENIACarShop.Models;
+@using Microsoft.AspNetCore.Identity;
+
+@inject SignInManager<BuyerModel> signInManager;
+
+<ul class="navbar-nav ms-auto">
+	@if (signInManager.IsSignedIn(User))
+	{
+		<li>
+			<a class="nav-link text-dark" asp-controller="Account" asp-action="Logout">Logout</a>
+		</li>
+		<li>
+			<a class="nav-link text-dark" asp-controller="OrderSession" asp-action="Index">My orders</a>
+		</li>
+		<li>
+			<a class="nav-link" style="color:red;" asp-controller="Account" asp-action="Remove">Remove my account</a>
+		</li>
+
+	}
+	else
+	{
+		<li>
+			<a class="nav-link text-dark" asp-controller="Account" asp-action="Login">Login</a>
+		</li>
+
+		<li>
+			<a class="nav-link text-dark" asp-controller="Account" asp-action="Register">Register</a>
+		</li>
+
+	}
+</ul>

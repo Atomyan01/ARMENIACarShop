@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ARMENIACarShop.Data;
 using ARMENIACarShop.Models;
+using ARMENIACarShop.Views.Helpers;
+using Microsoft.AspNetCore.Http;
 
 namespace ARMENIACarShop.Controllers
 {
@@ -22,7 +23,30 @@ namespace ARMENIACarShop.Controllers
         // GET: Car
         public async Task<IActionResult> Index()
         {
-            return View(await _context.CarModel.ToListAsync());
+            var carModels = await _context.CarModel.ToListAsync();
+
+            // Ավելացնել sums և counts, որոնք անհրաժեշտ են Index.cshtml-ում
+            ViewBag.Sums = new Dictionary<int, decimal>();
+            ViewBag.Counts = new Dictionary<int, int>();
+            decimal totalSum = 0;
+            int totalCount = 0;
+
+            // Ավելացնել տվյալների հաշվարկ
+            foreach (var car in carModels)
+            {
+                var sum = car.Price; // Հաշվում ենք ընդհանուր գինը
+                var count = 1; // Ավելացնում ենք հաշվարկի մեկ տարբերակ
+
+                ViewBag.Sums[car.Id] = sum;
+                ViewBag.Counts[car.Id] = count;
+
+                totalSum += sum;
+                totalCount += count;
+            }
+
+            ViewBag.Sum = totalSum;
+
+            return View(carModels);
         }
 
         // GET: Car/Details/5
@@ -35,13 +59,23 @@ namespace ARMENIACarShop.Controllers
 
             var carModel = await _context.CarModel
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (carModel == null)
             {
                 return NotFound();
             }
 
+            // Բերում ենք տվյալ մեքենայի համար բոլոր կարծիքները
+            var reviews = await _context.ReviewModel
+                .Where(r => r.Car.Id == id)  // Կապում ենք կարծիքը մեքենայի ID-ի հետ
+                .ToListAsync();
+
+            // Ավելացնում ենք դրանք `ViewBag`-ի մեջ
+            ViewBag.Reviews = reviews;
+
             return View(carModel);
         }
+
 
         // GET: Car/Create
         public IActionResult Create()
@@ -50,8 +84,6 @@ namespace ARMENIACarShop.Controllers
         }
 
         // POST: Car/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name,Model,Year,Type,Damaged,UnderWater,EngineCapacity,NumberOfDoors,CarMileage,RunAndDrive,Price,Electric")] CarModel carModel)
@@ -82,8 +114,6 @@ namespace ARMENIACarShop.Controllers
         }
 
         // POST: Car/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name,Model,Year,Type,Damaged,UnderWater,EngineCapacity,NumberOfDoors,CarMileage,RunAndDrive,Price,Electric")] CarModel carModel)
@@ -152,6 +182,34 @@ namespace ARMENIACarShop.Controllers
         private bool CarModelExists(int id)
         {
             return _context.CarModel.Any(e => e.Id == id);
+        }
+
+        // Գործողություն, որը ավելացնում է մեքենան "My Card"-ում
+        public IActionResult AddToMyCard(int id)
+        {
+            var car = _context.CarModel.FirstOrDefault(c => c.Id == id);
+            if (car == null)
+            {
+                return NotFound();
+            }
+
+            // Ստանում ենք "My Card" ցանկը Session-ից
+            List<CarModel> myCard = HttpContext.Session.GetObject<List<CarModel>>("MyCard") ?? new List<CarModel>();
+
+            // Ավելացնում ենք մեքենան
+            myCard.Add(car);
+
+            // Թարմացնում ենք Session-ը
+            HttpContext.Session.SetObject("MyCard", myCard);
+
+            return RedirectToAction("Index");
+        }
+
+       
+        public IActionResult MyCard()
+        {
+            var myCard = HttpContext.Session.GetObject<List<CarModel>>("MyCard") ?? new List<CarModel>();
+            return View(myCard);
         }
     }
 }

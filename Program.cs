@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using ARMENIACarShop.Data;
+using ARMENIACarShop.Models;
+using Microsoft.AspNetCore.Identity;
 namespace ARMENIACarShop
 {
 	public class Program
@@ -11,9 +13,16 @@ namespace ARMENIACarShop
 			builder.Services.AddDbContext<ARMENIACarShopContext>(options =>
 			    options.UseSqlServer(builder.Configuration.GetConnectionString("ARMENIACarShopContext") ?? throw new InvalidOperationException("Connection string 'ARMENIACarShopContext' not found.")));
 
+			builder.Services.AddIdentity<BuyerModel, IdentityRole>().
+			AddEntityFrameworkStores<ARMENIACarShopContext>().
+			AddDefaultTokenProviders();
+
 			// Add services to the container.
 			builder.Services.AddControllersWithViews();
 
+			
+
+			builder.Services.AddSession();
 			var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
@@ -26,6 +35,9 @@ namespace ARMENIACarShop
 
 			app.UseHttpsRedirection();
 			app.UseStaticFiles();
+
+            app.UseSession();
+			
 
 			app.UseRouting();
 

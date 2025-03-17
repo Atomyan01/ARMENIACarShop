@@ -1,157 +1,65 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ARMENIACarShop.Data;
 using ARMENIACarShop.Models;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace ARMENIACarShop.Controllers
 {
     public class ReviewController : Controller
     {
         private readonly ARMENIACarShopContext _context;
+        private readonly UserManager<BuyerModel> _userManager;
 
-        public ReviewController(ARMENIACarShopContext context)
+        public ReviewController(ARMENIACarShopContext context, UserManager<BuyerModel> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
-        // GET: Review
-        public async Task<IActionResult> Index()
+        [HttpGet]
+        public IActionResult AddReview(int? id)
         {
-            return View(await _context.ReviewModel.ToListAsync());
-        }
-
-        // GET: Review/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var reviewModel = await _context.ReviewModel
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (reviewModel == null)
-            {
-                return NotFound();
-            }
-
-            return View(reviewModel);
-        }
-
-        // GET: Review/Create
-        public IActionResult Create()
-        {
+            ViewBag.Id = id;
             return View();
         }
 
-        // POST: Review/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Stars")] ReviewModel reviewModel)
+        public async Task<IActionResult> AddReview([Bind("Content,Stars,Description")] ReviewModel reviewModel, int carId)
         {
-            if (ModelState.IsValid)
-            {
-                _context.Add(reviewModel);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(reviewModel);
-        }
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            BuyerModel? user = await _context.BuyerModel.FindAsync(userId);
+            var car = await _context.CarModel.FindAsync(carId);
 
-        // GET: Review/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (user == null) return Unauthorized();
+            if (car == null) return NotFound();
 
-            var reviewModel = await _context.ReviewModel.FindAsync(id);
-            if (reviewModel == null)
+            if (reviewModel.Stars < 0)
             {
-                return NotFound();
+                reviewModel.Stars = 0;
             }
-            return View(reviewModel);
-        }
-
-        // POST: Review/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Stars")] ReviewModel reviewModel)
-        {
-            if (id != reviewModel.Id)
+            else if (reviewModel.Stars > 10)
             {
-                return NotFound();
+                reviewModel.Stars = 10;
             }
 
-            if (ModelState.IsValid)
+            ReviewModel review = new ReviewModel
             {
-                try
-                {
-                    _context.Update(reviewModel);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ReviewModelExists(reviewModel.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(reviewModel);
-        }
+                Content = reviewModel.Content,
+                Description = reviewModel.Description,
+                Stars = reviewModel.Stars,
+                Buyer = user,
+                Car = car
+            };
 
-        // GET: Review/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var reviewModel = await _context.ReviewModel
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (reviewModel == null)
-            {
-                return NotFound();
-            }
-
-            return View(reviewModel);
-        }
-
-        // POST: Review/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var reviewModel = await _context.ReviewModel.FindAsync(id);
-            if (reviewModel != null)
-            {
-                _context.ReviewModel.Remove(reviewModel);
-            }
-
+            _context.ReviewModel.Add(review);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
 
-        private bool ReviewModelExists(int id)
-        {
-            return _context.ReviewModel.Any(e => e.Id == id);
+            return RedirectToAction("Details", "Car", new { id = carId });
         }
     }
 }
