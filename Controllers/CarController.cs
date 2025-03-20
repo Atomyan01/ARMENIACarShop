@@ -211,5 +211,14 @@ namespace ARMENIACarShop.Controllers
             var myCard = HttpContext.Session.GetObject<List<CarModel>>("MyCard") ?? new List<CarModel>();
             return View(myCard);
         }
+
+
+       
+
+
+
+
+
     }
+
 }
